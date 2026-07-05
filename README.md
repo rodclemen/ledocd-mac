@@ -103,6 +103,16 @@ After that, notarizing is just:
 This submits the DMG to Apple's automated malware scan, staples the approval
 ticket, and re-packages a ready-to-share DMG.
 
+## Release
+
+```sh
+./release.sh
+```
+
+One command: builds, packages, notarizes, and publishes a GitHub release named
+after the `VERSION` in `build.sh`, using that version's CHANGELOG section as
+the release notes. Refuses to run with uncommitted changes or an existing tag.
+
 ## Source layout (`Sources/LEDOCD/`)
 
 | File | Role |
