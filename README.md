@@ -1,6 +1,8 @@
-# LED OCD for Mac
+<p align="center">
+  <img src="image.png" width="200" alt="LED OCD">
+</p>
 
-<img src="image.png" align="right" width="220" alt="LED OCD">
+# LED OCD for Mac
 
 A native macOS app for configuring **LED OCD** and **GI OCD** boards — the
 pinball lamp controllers created by **Harold Toler** ([ledocd.com](https://ledocd.com))
