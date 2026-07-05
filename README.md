@@ -1,4 +1,4 @@
-# LED OCD for Mac    <img src="image.png" align="right" height="164" alt="LED OCD">
+# LED OCD for Mac    <img src="image.png" align="right" height="180" alt="LED OCD">
 
 
 A native macOS app for configuring **LED OCD** and **GI OCD** boards — the
