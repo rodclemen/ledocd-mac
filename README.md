@@ -1,5 +1,7 @@
 # LED OCD for Mac
 
+<img src="image.png" align="right" width="220" alt="LED OCD">
+
 A native macOS app for configuring **LED OCD** and **GI OCD** boards — the
 pinball lamp controllers created by **Harold Toler** ([ledocd.com](https://ledocd.com))
 that make LEDs in classic pinball machines fade smoothly like incandescent
