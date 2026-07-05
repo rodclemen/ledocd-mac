@@ -1,0 +1,65 @@
+T2,Terminator 2
+11,Multiplier 2X
+12,Multiplier 4X
+13,Hold Bonus
+14,Multiplier 6X
+15,Multiplier 8X
+16,Shoot Again
+17,Mouth 2
+18,Not Used
+21,Kickback
+22,Special 2
+23,L Return Lane
+24,R Return Lane
+25,Database 3
+26,Load Gun
+27,Extra Ball
+28,Load For Jackpot
+31,Target 1 High
+32,Target 2
+33,Target 3
+34,Target 4
+35,Target 5 Low
+36,Mid L Target Bank
+37,Mid C Target Bank
+38,Mid R Target Bank
+41,Lock Two
+42,Database 2
+43,10 Million
+44,Extra Ball
+45,Multiball
+46,Hurry Up Lit
+47,Hold Bonus
+48,Security Pass
+51,Eyes Lower
+52,Eyes Upper
+53,5 Million
+54,3 Million
+55,1 Million
+56,750k
+57,500k
+58,250k
+61,L CPU Lit
+62,L Vault Key
+63,L Silent Alarm
+64,L Passcode
+65,L Checkpoint
+66,Lock 1
+67,Database 1
+68,L Ramp
+71,R CPU Lit
+72,R Vault Key
+73,R Silent Alarm
+74,R Passcode
+75,R Checkpoint
+76,R Top Bank Tgt
+77,R Mid Bank Tgt
+78,R Bot Bank Tgt
+81,Chase Value
+82,R Ramp
+83,Hurry Up
+84,Start Button
+85,Drop Target
+86,Top L Lane
+87,Top C Lane
+88,Top R Lane

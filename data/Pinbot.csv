@@ -1,0 +1,65 @@
+PB,Pinbot
+11,Game Over 
+12,Match 
+13,Ball In Play 
+14,Mouth 1 
+15,Mouth 2 
+16,Mouth 3
+17,Mouth 4
+18,Mouth 5
+21,2X
+22,3X
+23,4X
+24,5X
+25,Single Eject's 25K
+26,Single Eject's 50K
+27,Single Eject's 75K
+28,Single Eject's Lites Extra Ball
+31,Drop Target Single Timer
+32,Advance Planet
+33,Pluto
+34,Neptune
+35,Uranus
+36,Saturn
+37,Jupiter
+38,Mars
+41,Earth 
+42,Venus
+43,Mercury
+44,Yellow 1 (upper)
+45,Yellow 2
+46,Yellow 3 (middle)
+47,Yellow 4
+48,Yellow 5 (lower)
+51,Shoot Again
+52,Score Energy
+53,Solar Energy Value
+54,Blue 1 (upper)
+55,Blue 2
+56,Blue 3 (middle)
+57,Blue 4
+58,Blue 5 (lower)
+61,Drop Target (upper)
+62,Drop Target (middle)
+63,Drop Target (lower)
+64,Amber 1 (upper)
+65,Amber 2
+66,Amber 3 (middle)
+67,Amber 4
+68,Amber 5 (lower)
+71,Left Outlane Extra Ball
+72,Left Return Extra Ball
+73,Special
+74,Green 1 (upper)
+75,Green 2
+76,Green 3 (middle)
+77,Green 4
+78,Green 5 (lower)
+81,Right Outlane Extra Ball
+82,Right Return Extra Ball
+83,Not Used
+84,Red 1 (upper)
+85,Red 2
+86,Red 3 (middle)
+87,Red 4
+88,Red 5 (lower)

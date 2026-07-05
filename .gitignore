@@ -1,0 +1,9 @@
+# Build artifacts (rebuild with ./build.sh + ./makedmg.sh)
+.build/
+dist/
+
+# macOS noise
+.DS_Store
+
+# Retired original sources kept around locally until deleted
+delete me/

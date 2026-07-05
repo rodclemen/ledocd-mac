@@ -1,0 +1,80 @@
+1,Start Button
+2,Tournament Start Button
+3,Deal Again
+4,Special (Left Outlane)
+5,Triple Score (Left Inlane)
+6,Triple Score (Right Inlane)
+7,Special (Right Outlane)
+8,Light Lock
+9,1 Pair
+10,2 Pair
+11,Three of a Kind
+12,Skill Shot (Skill Flip)
+13,Red Arrow (Left Ramp)
+14,RIVER (Left Ramp)
+15,Red Arrow (Right Ramp)
+16,RIVER (Right Ramp)
+17,Straight
+18,Flush
+19,Full House
+20,Skill Shot (Mystery)
+21,TURN (Left Ramp)
+22,FLOP (Left Ramp)
+23,TURN (Right Ramp)
+24,FLOP (Right Ramp)
+25,Four of a Kind
+26,Straight Flush
+27,Royal Flush
+28,Skill Shot (Advance Hold 'Em)
+29,Chip Trick (Left Ramp)
+30,Red Arrow (Right VUK)
+31,WPT World Championship
+32,Chip Trick (Right Ramp)
+33,* Ace of Spades *
+34,* Queen of Hearts *
+35,* 10 of Spades *
+36,* Jack of Diamonds *
+37,Poker Corner
+38,Lock (Right)
+39,Aruba
+40,Los Angeles
+41,* 8 of Spades *
+42,* Queen of Spades *
+43,* 10 of Clubs *
+44,* King of Clubs *
+45,Spin a Card
+46,Chip Trick (Right VUK)
+47,Bahamas
+48,Paris
+49,* 9 of Spades *
+50,* King of Hearts *
+51,* 9 of Diamonds *
+52,* Jack of Spades *
+53,Red Arrow (Left Orbit)
+54,Chip Trick (Left Orbit)
+55,Atlantic City
+56,Las Vegas
+57,* King of Diamonds *
+58,* 7 of Spades *
+59,* Queen of Clubs *
+60,* King of Spades *
+61,Red Arrow (Right Orbit)
+62,Pop Bumper (Left)
+63,"""Steal the Blind"""
+64,"""A Chip and a Chair"""
+65,Red Arrow (Left VUK)
+66,Cut the Cards
+67,Pop Standup #1
+68,Pop Standup #2
+69,Chip Trick (Right Orbit)
+70,Pop Bumper (Right)
+71,"""Play the Button"""
+72,"""Spot the Tell"""
+73,Lock (Left)
+74,Extra Ball
+75,Pop Standup #3
+76,Pop Standup #4
+77,
+78,Pop Bumper (Lower)
+79,"""Know Your Outs"""
+80,"""Change Gears"""
