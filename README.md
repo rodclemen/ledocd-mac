@@ -6,6 +6,10 @@ pinball lamp controllers created by **Harold Toler** ([ledocd.com](https://ledoc
 that make LEDs in classic pinball machines fade smoothly like incandescent
 bulbs instead of snapping on and off.
 
+**⬇️ [Download the latest release](https://github.com/rodclemen/ledocd-mac/releases/latest)** —
+grab `LED-OCD.dmg`, open it, and drag the app to Applications. Signed and
+notarized; macOS 12 or newer, Apple Silicon and Intel.
+
 ## Credit where it's due
 
 This app is entirely built on the foundation of **Harold Toler's LED & GI OCD**.
