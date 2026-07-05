@@ -10,7 +10,7 @@ BUNDLE_ID="com.rodclemen.ledocd"
 EXE_NAME="LEDOCD"
 # Version scheme: bump the LAST number for every release (0.9.2, 0.9.3, …,
 # 0.9.566, …) — it never rolls over. 1.0 happens only as a deliberate milestone.
-VERSION="0.9.1"
+VERSION="0.9.2"
 BUILD="${VERSION##*.}"   # CFBundleVersion derived from the last number
 # Code-signing identity — nothing personal is hardcoded:
 #   1. $LEDOCD_SIGN_ID, if set (explicit override)

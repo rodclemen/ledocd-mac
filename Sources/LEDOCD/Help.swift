@@ -69,7 +69,7 @@ final class HelpWindowController {
         body("This app lets you customize how the LED lamps on your pinball machine look, then save those settings onto your LED OCD or GI OCD board. Here's how everything works.")
 
         head("1. Connecting to your board")
-        bullet("Plug the board into your Mac with its USB cable, click Scan, choose the board in the COM Select list, then click Connect. The app reads the board and shows what it is (LED or GI) and its firmware version at the top-right.")
+        bullet("Plug the board into your Mac with its USB cable, click Scan, choose the board in the COM Select list, then click Connect. The app detects what it is (LED or GI, shown top-right) and automatically loads the settings currently stored on it.")
         bullet("No board handy? Turn on \u{201C}Simulate Board\u{201D} in the Advanced menu to try everything out without any hardware. A red \u{201C}SIMULATED\u{201D} label reminds you it's pretend.")
 
         head("2. Choosing your machine")
@@ -86,18 +86,20 @@ final class HelpWindowController {
         head("4. Setting the brightness (Profiles)")
         bullet("A \u{201C}profile\u{201D} is a brightness recipe. Each machine can use up to 8 of them. For each profile you set how dim (B1) to how bright (B8) it goes, plus a Delay that controls how smoothly it fades.")
         bullet("Normally you only set the dimmest and brightest values and the app fills in the steps between. Turn on Advanced if you'd rather hand-tune every step.")
-        bullet("In the lamp list, the Select column is where you choose which profile each lamp uses. (Click a column header to sort the list.)")
+        bullet("In the lamp list, the Profile column is where you choose which profile each lamp uses. (Click a column header to sort the list.)")
 
         head("5. Tuning brightness live (Live Mode)")
         bullet("Live Mode lets you dial in a profile's brightness while watching the real lamps — no guessing at levels, and no saving over and over just to check.")
-        bullet("Press the lamp button next to a profile and every lamp that uses it lights up. Now simply edit that profile's brightness values: the lamps change instantly as you type, so the number that looks right is exactly what gets saved. When it looks good, click Save — that's it.")
-        bullet("Click any B1–B8 box to see that step on the lamps — the yellow box is the one currently showing. (With Advanced off you can edit B1 and B8; the steps between are click-to-view.) You can also light any single lamp to any brightness with the chooser in its row.")
+        bullet("Press the lamp button next to a profile and every lamp that uses it lights up. Now simply edit that profile's brightness values: the lamps change instantly as you type, so the number that looks right is exactly what gets stored.")
+        bullet("Click any B1–B8 box to see that step on the lamps — the yellow box is the one currently showing. (With Advanced off you can edit B1 and B8; the steps between are click-to-view.) You can also light any single lamp to any brightness with the Brightness column in the lamp list.")
+        bullet("When it looks right, press Commit Changes — it sends everything to the board and stores it permanently, in one press, without leaving Live Mode. The button glows red whenever you have edits you haven't committed yet.")
         bullet("In short: Live Mode for tuning how things look. To check that lamps work or find which is which, use Manual Test (below).")
 
         head("6. Saving your setup to the board")
-        bullet("Send loads your current settings onto the board so you can see them straight away.")
-        bullet("Save stores them on the board for good, so they stay after the machine is powered off and on.")
-        bullet("Read does the opposite — it fetches whatever settings are already on the board, in case you'd like to start from those.")
+        bullet("Send loads your current settings onto the board so you can see them straight away. It turns green whenever you have changes the board hasn't received — your cue to press it.")
+        bullet("Save stores the board's settings for good, so they survive power-off. It turns red after a Send until you've saved — so the colors walk you through it: edit → green Send → red Save → done.")
+        bullet("In Live Mode those two are combined into the single Commit Changes button (Send is disabled there).")
+        bullet("Read fetches whatever settings are already on the board, in case you'd like to start from those. (Connect does this automatically.)")
         bullet("Export backs your whole setup up to a file; Import loads one you saved before.")
 
         head("7. Checking your lamps (Manual Test)")
@@ -109,6 +111,7 @@ final class HelpWindowController {
         bullet("If your board runs the general illumination (the flood lighting rather than the insert lamps), you'll see 6 light \u{201C}strings.\u{201D} For each one you set a resting brightness (Normal) and a brighter reaction (Active).")
         bullet("The Active brightness kicks in when something happens in the game (the string's Activity input) — for instance flashing up during a mode — then eases back down. Fade delay sets how quickly it eases; Activity duration is how long it stays bright.")
         bullet("50 Hz and Out freq fine-tune flicker so the lights look smooth in person and on camera.")
+        bullet("Live Mode works here too: press a string's lamp button to light it, then click or edit its brightness values to see each level on the real lights — exactly like tuning LED profiles.")
 
         head("Good to know")
         bullet("The panel at the bottom is a running log of what the app is doing.")

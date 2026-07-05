@@ -126,16 +126,29 @@ struct ChevronPicker<Value: Hashable>: View {
     /// Optional section title per option. When consecutive options' titles differ,
     /// a disabled header row is inserted above the new section (nil = no header).
     var section: ((Value) -> String?)? = nil
+    /// Slim style: hides the system double-arrow indicator and draws a thinner
+    /// light-weight chevron instead (used by the dense per-lamp dropdowns).
+    var slim: Bool = false
 
     var body: some View {
         PopUpButton(
             entries: entries,
             selectedOption: Binding(
                 get: { options.firstIndex(of: selection) ?? 0 },
-                set: { idx in if options.indices.contains(idx) { selection = options[idx] } }))
+                set: { idx in if options.indices.contains(idx) { selection = options[idx] } }),
+            slim: slim)
             .frame(width: width)
             .frame(minWidth: width == nil ? minWidth : nil)
             .frame(height: 22)
+            .overlay(alignment: .trailing) {
+                if slim {
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 8, weight: .light))
+                        .foregroundStyle(.secondary)
+                        .padding(.trailing, 5)
+                        .allowsHitTesting(false)
+                }
+            }
     }
 
     private var entries: [PopUpEntry] {
@@ -160,6 +173,7 @@ enum PopUpEntry: Equatable {
 private struct PopUpButton: NSViewRepresentable {
     let entries: [PopUpEntry]
     @Binding var selectedOption: Int
+    var slim: Bool = false
 
     func makeNSView(context: Context) -> NSPopUpButton {
         let b = NSPopUpButton(frame: .zero, pullsDown: false)
@@ -167,6 +181,7 @@ private struct PopUpButton: NSViewRepresentable {
         b.action = #selector(Coordinator.changed(_:))
         b.autoenablesItems = false                                   // keep headers disabled
         b.setContentHuggingPriority(.defaultLow, for: .horizontal)   // let SwiftUI set width
+        if slim { (b.cell as? NSPopUpButtonCell)?.arrowPosition = .noArrow }
         return b
     }
 

@@ -70,9 +70,12 @@ final class ManualSession {
     }
 
     /// Leave the session: optionally return the board to normal play, then close.
+    /// Captures self STRONGLY: the Controller drops its reference right after
+    /// calling this, and a weak capture would let the session deallocate before
+    /// the block runs — silently skipping the return-to-normal command (the
+    /// board then stays in manual mode with all lamps off).
     func exit(returnToNormal: Bool, completion: @escaping () -> Void) {
-        queue.async { [weak self] in
-            guard let self else { return }
+        queue.async {
             if let p = self.port {
                 if returnToNormal { try? OCDDevice(port: p).setNormalMode() }
                 p.close()

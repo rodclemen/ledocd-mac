@@ -9,6 +9,10 @@ struct GIView: View {
     /// When off (default), B2–B7 are auto-calculated from B1/B8 and locked.
     private var advanced: Bool { config.advanced }
 
+    /// Which editable brightness cell has focus, so clicking into a B field
+    /// selects/shows it during Live Mode (key: stringIdx*16 + activeRow*8 + b).
+    @FocusState private var focusedBrightness: Int?
+
     // Shared column widths (mirrors the LED profiles table).
     private let wStr: CGFloat = 88
     private let wInput: CGFloat = 116
@@ -128,22 +132,73 @@ struct GIView: View {
                             brightnessBoxes(s, active: true)
                         }
                     }
-                    PreviewButton(isActive: live.giActive(config.strings[s].id),
+                    PreviewButton(isActive: live.stringActive(config.strings[s].id),
                                   enabled: live.active) {
-                        live.toggleGI(config.strings[s].id)
+                        live.toggleString(config.strings[s].id)
                     }
                     .hint(live.active
-                          ? "Preview this string's fade on the board (plays 3×)."
-                          : "Turn on Live Mode to preview this string's fade.", hintArea)
+                          ? "Light this string — then edit or click the B values to preview brightness."
+                          : "Turn on Live Mode to light this string.", hintArea)
                 }
                 Divider()
             }
+        }
+        // Clicking into an editable B field shows that B on the string. Deferred
+        // so the highlight updates on this render pass, not one behind.
+        .onChange(of: focusedBrightness) { key in
+            guard let key else { return }
+            let s = key / 16, act = (key % 16) >= 8, i = key % 8
+            DispatchQueue.main.async { live.showStringB(config.strings[s].id, act, i) }
         }
     }
 
     private func brightnessBoxes(_ s: Int, active: Bool) -> some View {
         ForEach(0..<8, id: \.self) { i in
-            let editable = advanced || i == 0 || i == 7
+            bCell(s, active, i)
+        }
+    }
+
+    /// A single B cell — same behavior as the LED page: while the string's 💡 is
+    /// on, editable cells update the string live as you type and clicking any
+    /// cell shows that brightness (yellow = the one currently lit).
+    @ViewBuilder
+    private func bCell(_ s: Int, _ active: Bool, _ i: Int) -> some View {
+        let id = config.strings[s].id
+        let liveOn = live.stringActive(id)
+        let editable = advanced || i == 0 || i == 7
+        let key = s * 16 + (active ? 8 : 0) + i
+        let sel = live.stringShownB(id)
+        let shown = liveOn && ((sel?.active == active && sel?.b == i) || focusedBrightness == key)
+        if liveOn && editable {
+            TextField("", value: Binding(
+                get: { active ? config.strings[s].activeBright[i] : config.strings[s].normal[i] },
+                set: { v in
+                    let val = min(max(v, 0), 100)
+                    if active { config.strings[s].activeBright[i] = val }
+                    else { config.strings[s].normal[i] = val }
+                    if !advanced && (i == 0 || i == 7) { recompute(s, active: active) }
+                    live.showStringB(id, active, i)
+                }), format: .number)
+                .multilineTextAlignment(.center)
+                .textFieldStyle(.plain)
+                .frame(width: wB).padding(.vertical, 3)
+                .background(RoundedRectangle(cornerRadius: 5)
+                    .fill(shown ? Color.yellow.opacity(0.35) : Color(nsColor: .textBackgroundColor)))
+                .overlay(RoundedRectangle(cornerRadius: 5)
+                    .stroke(shown ? Color.yellow : Color.primary.opacity(0.22), lineWidth: 1))
+                .focused($focusedBrightness, equals: key)
+        } else if liveOn {
+            // Locked middle value (Advanced off): tap to show it on the string.
+            Button { focusedBrightness = nil; live.showStringB(id, active, i) } label: {
+                Text("\(active ? config.strings[s].activeBright[i] : config.strings[s].normal[i])")
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .frame(width: wB).padding(.vertical, 3)
+                    .background(RoundedRectangle(cornerRadius: 5)
+                        .fill(shown ? Color.yellow.opacity(0.35) : Color.clear))
+            }
+            .buttonStyle(.plain)
+        } else {
             NumBox(value: brightnessBinding(s, active, i), range: 0...100, width: wB, locked: !editable)
                 .disabled(!editable)
                 .opacity(editable ? 1 : 0.8)

@@ -109,10 +109,10 @@ struct LEDView: View {
     // Shared column widths.
     private let wLamp: CGFloat = 44
     private let wInsert: CGFloat = 180
-    private let wProfile: CGFloat = 84
+    private let wProfile: CGFloat = 100
     private let wSelect: CGFloat = 56
     // Trailing column: shows a 0…8 brightness chevron per lamp while Live Mode is on.
-    private let wLive: CGFloat = 50
+    private let wLive: CGFloat = 62
     // Fixed overall width for the lamp table. The Live column is always reserved
     // (wLive) so the table is a bit wider and the chevron can appear on Live Mode
     // without shifting Lamp/Insert/Profile/Select.
@@ -280,21 +280,33 @@ struct LEDView: View {
 
     // MARK: - Lamp table (left)
 
+    /// With "always show scroll bars" (legacy scrollers), the rows' ScrollView
+    /// loses ~16pt of content width to the scroller while the pinned header
+    /// doesn't — shifting every column after the flexible Insert. Inset the
+    /// header by the same amount so the columns line up. Overlay scrollers
+    /// (the default) take no layout space, so the inset is 0.
+    private var scrollerInset: CGFloat {
+        NSScroller.preferredScrollerStyle == .legacy
+            ? NSScroller.scrollerWidth(for: .regular, scrollerStyle: .legacy)
+            : 0
+    }
+
     private var lampTable: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
                 sortableHeader("Lamp", .lamp).frame(width: wLamp, alignment: .leading)
                 sortableHeader("Insert", .insert).frame(maxWidth: .infinity, alignment: .leading)
-                Text("Profile").frame(width: wProfile, alignment: .leading)
-                sortableHeader("Select", .select).frame(width: wSelect, alignment: .leading)
+                Text("Profile Name").frame(width: wProfile, alignment: .leading)
+                sortableHeader("Profile", .select).frame(width: wSelect, alignment: .leading)
                 if live.active {
-                    Text("Live").frame(width: wLive, alignment: .leading)
+                    Text("Brightness").frame(width: wLive, alignment: .leading)
                 } else {
                     Color.clear.frame(width: wLive, height: 0)
                 }
             }
             .font(.caption.bold()).foregroundStyle(.secondary)
             .padding(.horizontal, 8).padding(.vertical, 5)
+            .padding(.trailing, lamps.isEmpty ? 0 : scrollerInset)
             Divider()
 
             if lamps.isEmpty {
@@ -343,7 +355,7 @@ struct LEDView: View {
             ChevronPicker(selection: Binding(
                 get: { config.lampProfile[lamp.number] ?? 7 },
                 set: { config.lampProfile[lamp.number] = $0 }
-            ), options: Array(1...8), label: { "\($0)" }, width: wSelect - 8)
+            ), options: Array(1...8), label: { "\($0)" }, width: wSelect - 16, slim: true)
                 .frame(width: wSelect, alignment: .leading)
                 .hint("Choose which brightness profile this lamp uses.", hintArea)
             // Live column: the wLive space is ALWAYS reserved (empty spacer when
@@ -352,7 +364,7 @@ struct LEDView: View {
                 ChevronPicker(selection: Binding(
                     get: { live.lampLevel(lamp.number) },
                     set: { live.setLampLevel(lamp.number, $0) }
-                ), options: Array(0...8), label: { "\($0)" }, width: wLive - 10)
+                ), options: Array(0...8), label: { "\($0)" }, width: wLive - 22, slim: true)
                     .frame(width: wLive, alignment: .leading)
                     .hint("Light this lamp right now (0 = off … 8 = max).", hintArea)
             } else {

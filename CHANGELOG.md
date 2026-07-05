@@ -1,5 +1,45 @@
 # Changelog — LED OCD macOS app
 
+## 0.9.2 — 2026-07-05
+
+First round of real-hardware testing: a stuck-board bug, a guided Send/Save
+workflow, GI Live Mode, and table polish.
+
+- **Fixed: exiting Manual Test (or Live Mode) could leave the board stuck in
+  manual mode with all lamps off.** The return-to-normal command was queued
+  with a weak reference to the serial session, which the app released
+  immediately — when the race lost, the command silently never got sent (the
+  board only recovered when some later action sent its own normal-mode
+  command). Both cleanup paths now hold the session until the command is on
+  the wire.
+- **Guided Send/Save workflow (regular mode):** Send turns green whenever the
+  app holds changes the board hasn't received; after a successful Send, Save
+  turns red until pressed (the board's Save can only persist what it was last
+  sent). Dirty tracking compares against a fingerprint of the last
+  sent/read state — so a field re-committing an identical value doesn't
+  trigger it, and manually reverting an edit turns Send back off.
+- **Live Mode: Commit Changes.** Save is renamed Commit Changes in Live Mode
+  and does send + save in one press THROUGH the live session — the board never
+  leaves manual mode, so you keep tuning; the button glows red while there are
+  uncommitted edits. Send is disabled in Live Mode to remove the ambiguity.
+- **Connect now auto-reads the board's settings** after detection, so the app
+  immediately mirrors the machine and the button colors start truthful.
+- **GI page Live Mode reworked to match the LED page:** a string's lamp button
+  lights it steadily (no more fade loop); clicking any Normal/Active B box
+  shows that brightness on the string with the yellow highlight; editable
+  boxes drive the string live as you type.
+- **Lamp table renames:** "Profile" → "Profile Name", "Select" → "Profile",
+  "Live" → "Brightness". Fixed a long-standing header misalignment visible
+  with "always show scroll bars": the scroller steals ~16pt from the rows but
+  not the pinned header — the header now insets to match.
+- Per-lamp Profile/Brightness dropdowns slimmed: narrower, and the chunky
+  system double-arrow replaced with a light-weight chevron.
+- **Return/Enter now commits and unfocuses a text field**, and clicking
+  anywhere outside a field drops focus — implemented as pass-through AppKit
+  event monitors, NOT a window-wide SwiftUI gesture (which is what froze all
+  buttons in 0.9.0's bug).
+- Manual and README updated for all of the above.
+
 ## 0.9.1 — 2026-07-05
 
 Made the repo public-ready: no personal credentials or contact info anywhere.

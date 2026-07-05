@@ -27,9 +27,11 @@ struct LiveControl {
     var profileActiveB: (Int) -> Int?       // active B index 0…7, or nil
     var toggleProfile: (Int) -> Void        // 💡 on/off (lights lamps at B8 / returns to chevron)
     var showProfileB: (Int, Int) -> Void    // drive lamps to profile p's B[b] (click or live edit)
-    // GI — unchanged fade preview
-    var giActive: (Int) -> Bool
-    var toggleGI: (Int) -> Void
+    // GI — per-string activation, mirroring the LED profile behavior
+    var stringActive: (Int) -> Bool                        // string lit?
+    var stringShownB: (Int) -> (active: Bool, b: Int)?     // which B it's showing
+    var toggleString: (Int) -> Void                        // 💡 on/off
+    var showStringB: (Int, Bool, Int) -> Void              // show B (row, index)
 }
 
 // MARK: - Fade math (pure, reused by every preview)
@@ -143,14 +145,34 @@ final class PreviewPlayer {
         }
     }
 
+    /// Run a write program on the open session (pre-empting any fade) and
+    /// report completion on the main queue. Used by Live Mode's Save to send
+    /// settings + <S> WITHOUT leaving manual mode — the session stays live.
+    func run(_ body: @escaping (OCDDevice) throws -> Void,
+             completion: @escaping (Bool) -> Void) {
+        _ = bump()
+        queue.async {
+            guard let p = self.port else { DispatchQueue.main.async { completion(false) }; return }
+            do {
+                try body(OCDDevice(port: p))
+                DispatchQueue.main.async { completion(true) }
+            } catch {
+                DispatchQueue.main.async { self.onError?("✗ Send+save: \(error)"); completion(false) }
+            }
+        }
+    }
+
     /// Stop the current fade (lamps off) but stay open in manual mode.
     func cancelFade() { _ = bump() }
 
     /// Leave manual mode: pre-empt any fade, return the board to normal, close.
+    /// Strong self on purpose — the Controller nils its reference immediately
+    /// after calling end(); a weak capture could deallocate the player before
+    /// this runs, leaving the board stuck in manual mode (lamps off).
     func end() {
         _ = bump()
-        queue.async { [weak self] in
-            guard let self, let p = self.port else { return }
+        queue.async {
+            guard let p = self.port else { return }
             try? OCDDevice(port: p).setNormalMode()
             p.close()
             self.port = nil

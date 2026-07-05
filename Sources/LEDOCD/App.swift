@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Combine
 import UniformTypeIdentifiers
 
 extension Notification.Name {
@@ -19,13 +20,30 @@ struct LEDOCDApp: App {
 
     init() {
         NSApplication.shared.setActivationPolicy(.regular)
-        // Escape drops focus while editing a text field.
+        // Escape and Return drop focus while editing a text field. Excludes
+        // panels (e.g. the rename alert), where Return must press the default
+        // button. Return is consumed after unfocusing so it can't also trigger
+        // the Connect button's default-action shortcut.
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            if event.keyCode == 53,   // Escape
-               let window = NSApp.keyWindow,
+            if event.keyCode == 53 || event.keyCode == 36 || event.keyCode == 76,  // Esc, Return, Enter
+               let window = NSApp.keyWindow, !(window is NSPanel),
                window.firstResponder is NSTextView {
                 window.makeFirstResponder(nil)
                 return nil
+            }
+            return event
+        }
+        // Clicking anywhere that isn't a text field drops focus. Done as an
+        // event monitor (which always passes the event through) instead of a
+        // SwiftUI tap gesture — a window-wide gesture competes with buttons
+        // for their clicks and once froze the whole UI.
+        NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { event in
+            if let window = event.window, !(window is NSPanel),
+               window.firstResponder is NSTextView {
+                let hit = window.contentView?.hitTest(event.locationInWindow)
+                if !(hit is NSTextView) && !(hit is NSTextField) {
+                    window.makeFirstResponder(nil)
+                }
             }
             return event
         }
@@ -146,6 +164,15 @@ final class Controller: ObservableObject {
         }
     }
 
+    /// True while the app holds edits the board hasn't received yet.
+    /// Regular mode: tints Send green. Live Mode: tints Commit Changes red.
+    /// Starts neutral; the first actual edit flips it.
+    @Published var hasUnsentChanges = false
+    /// True after a successful Send whose settings haven't been persisted with
+    /// Save yet — tints the Save button red (regular mode).
+    @Published var hasUnsavedSends = false
+    private var dirtyObservers: Set<AnyCancellable> = []
+
     init() {
         presets = Presets.loadAll()
         // Restore the last game used; otherwise leave it on the "- Select game -"
@@ -154,6 +181,40 @@ final class Controller: ObservableObject {
         selectedPreset = lastGame.flatMap { name in presets.first { $0.name == name } }
         syncStatus = Presets.hasUserData ? "Machine data: refreshed copy" : "Machine data: bundled"
         syncLampsToPreset()
+        markClean()
+        // After any config write, compare against the last clean state. Comparing
+        // (not just observing) matters: text fields write their own value back
+        // when first focused, and identical write-backs must NOT turn Send green.
+        // Bonus: manually reverting an edit turns it back off.
+        let recheck: () -> Void = { [weak self] in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                let dirty = self.fingerprint() != self.cleanFingerprint
+                if self.hasUnsentChanges != dirty { self.hasUnsentChanges = dirty }
+            }
+        }
+        led.objectWillChange.sink { _ in recheck() }.store(in: &dirtyObservers)
+        gi.objectWillChange.sink { _ in recheck() }.store(in: &dirtyObservers)
+    }
+
+    /// Canonical serialization of everything Send writes to the board — the
+    /// export XML built from current state. Equal fingerprints = nothing unsent.
+    private func fingerprint() -> String {
+        let numbers = (selectedPreset?.lampNumbers ?? Array(led.lampProfile.keys)).sorted()
+        let lampProfiles = numbers.map { (number: $0, profile: led.lampProfile[$0] ?? 7) }
+        let ledXML = ConfigIO.exportLEDXML(title: "", advanced: led.advanced,
+                                           lampProfiles: lampProfiles, profiles: led.profiles)
+        let giXML = ConfigIO.exportGIXML(advanced: gi.advanced, fadeMin: gi.fadeMin,
+                                         fadeMax: gi.fadeMax, actDuration: gi.activityDuration,
+                                         fiftyHz: gi.fiftyHz, strings: gi.strings)
+        return ledXML + giXML
+    }
+    private var cleanFingerprint = ""
+
+    /// Mark the current state as matching the board (after Send / Read / launch).
+    private func markClean() {
+        cleanFingerprint = fingerprint()
+        hasUnsentChanges = false
     }
 
     /// Pull the current machine CSVs from ledocd.com into Application Support and
@@ -429,6 +490,9 @@ final class Controller: ObservableObject {
                 }
                 self.append(out)
                 self.isBusy = false
+                // A successful Connect flows straight into reading the board's
+                // settings, so the app immediately mirrors what's on it.
+                if captured != nil { self.readSettings() }
             }
         }
     }
@@ -471,6 +535,8 @@ final class Controller: ObservableObject {
                 if let boardInfo {
                     self.append("  matrix: \(boardInfo.manufacturer.rawValue) (firmware v\(boardInfo.version))")
                 }
+                // After a successful read the app mirrors the board — nothing unsent.
+                if !captured.isEmpty { self.markClean() }
                 self.append(out)
                 self.isBusy = false
             }
@@ -479,12 +545,13 @@ final class Controller: ObservableObject {
 
     // MARK: - Apply settings (send everything)
 
-    func applySettings() {
-        if effectiveBoard == .giOCD { applyGI() } else { applyLED() }
+    func applySettings(andSave: Bool = false) {
+        if effectiveBoard == .giOCD { applyGI(andSave: andSave) } else { applyLED(andSave: andSave) }
     }
 
-    private func applyLED() {
-        // Snapshot main-actor data before dispatching to a background thread.
+    /// Snapshot the LED settings into a self-contained serial write program,
+    /// runnable on any open session (a fresh one, or the Live Mode session).
+    private func ledProgram(andSave: Bool) -> (OCDDevice) throws -> Void {
         let profiles = led.profiles.map { (name: $0.name, delay: $0.delay, brightness: $0.brightness) }
         let manu = effectiveManufacturer
         let relay = manu.needsRelayPrefix
@@ -493,7 +560,7 @@ final class Controller: ObservableObject {
                 let cr = OCDDevice.colRow(forLamp: lamp.number, manufacturer: manu)
                 return (cr.col, cr.row, led.lampProfile[lamp.number] ?? 7)
             }
-        runSerial("Apply LED OCD settings (\(profiles.count) profiles, \(lampAssignments.count) lamps)") { dev, _ in
+        return { dev in
             for (i, p) in profiles.enumerated() {
                 let n = i + 1
                 try dev.setProfileName(profile: n, name: p.name, relay: relay)
@@ -505,15 +572,29 @@ final class Controller: ObservableObject {
             for a in lampAssignments where a.col >= 1 && a.col <= 8 && a.row >= 1 && a.row <= 10 {
                 try dev.setLampProfile(col: a.col, row: a.row, profile: a.profile, relay: relay)
             }
-            return "✓ Applied all LED OCD settings. Use Save to persist them on the board."
+            if andSave { try dev.save() }
         }
     }
 
-    private func applyGI() {
+    private func applyLED(andSave: Bool = false) {
+        let program = ledProgram(andSave: andSave)
+        let count = selectedPreset?.lamps.count ?? 0
+        runSerial("Apply LED OCD settings (8 profiles, \(count) lamps)",
+                  onDone: { [weak self] ok in
+                      if ok { self?.markClean(); self?.hasUnsavedSends = !andSave }
+                  }) { dev, _ in
+            try program(dev)
+            return andSave ? "✓ Sent and saved — settings stored permanently on the board."
+                           : "✓ Applied all LED OCD settings. Use Save to persist them on the board."
+        }
+    }
+
+    /// Snapshot the GI settings into a self-contained serial write program.
+    private func giProgram(andSave: Bool) -> (OCDDevice) throws -> Void {
         let strings = gi.strings.map { (input: $0.input, active: $0.active, normal: $0.normal, activeBright: $0.activeBright) }
         let fadeMin = gi.fadeMin, fadeMax = gi.fadeMax
         let actDur = gi.activityDuration, fifty = gi.fiftyHz, outFreq = gi.outputFreq
-        runSerial("Apply GI OCD settings (6 strings + globals)") { dev, _ in
+        return { dev in
             for (i, s) in strings.enumerated() {
                 let n = i + 1
                 try dev.setStringInput(string: n, input: s.input)
@@ -527,13 +608,56 @@ final class Controller: ObservableObject {
             try dev.setActivityDuration(actDur)
             try dev.set50Hz(fifty)
             try dev.setOutputFrequency(outFreq)
-            return "✓ Applied all GI OCD settings. Use Save to persist them on the board."
+            if andSave { try dev.save() }
+        }
+    }
+
+    private func applyGI(andSave: Bool = false) {
+        let program = giProgram(andSave: andSave)
+        runSerial("Apply GI OCD settings (6 strings + globals)",
+                  onDone: { [weak self] ok in
+                      if ok { self?.markClean(); self?.hasUnsavedSends = !andSave }
+                  }) { dev, _ in
+            try program(dev)
+            return andSave ? "✓ Sent and saved — settings stored permanently on the board."
+                           : "✓ Applied all GI OCD settings. Use Save to persist them on the board."
         }
     }
 
     // MARK: - Simple actions
 
-    func save() { runSerial("Save settings to board") { d, _ in try d.save(); return "✓ Settings saved on board." } }
+    /// The Save button. In Live Mode you've already seen the settings on the
+    /// playfield, so one press sends everything AND stores it (the board's Save
+    /// command can only persist what it was last sent) — through the live
+    /// session's open port, so Live Mode stays on and you can keep tuning.
+    /// In regular mode it just persists the last Send (gated on hasUnsentChanges).
+    func saveAction() {
+        if liveMode { liveSendAndSave() } else { save() }
+    }
+
+    private func liveSendAndSave() {
+        guard let player = previewPlayer else { applySettings(andSave: true); return }
+        let program = effectiveBoard == .giOCD ? giProgram(andSave: true)
+                                               : ledProgram(andSave: true)
+        isBusy = true
+        append("▶︎ Send + save (staying in Live Mode)…")
+        player.run(program) { [weak self] ok in
+            guard let self else { return }
+            self.isBusy = false
+            if ok {
+                self.markClean()
+                self.hasUnsavedSends = false
+                self.append("✓ Sent and saved — settings stored on the board. Live Mode still on.")
+            }
+        }
+    }
+
+    func save() {
+        runSerial("Save settings to board",
+                  onDone: { [weak self] ok in if ok { self?.hasUnsavedSends = false } }) { d, _ in
+            try d.save(); return "✓ Settings saved on board."
+        }
+    }
 
     // MARK: - Import / Export (Windows-app-compatible XML)
 
@@ -690,10 +814,11 @@ final class Controller: ObservableObject {
         activeMode = .manual
         liveLampLevel = [:]
         liveProfileB = [:]
+        liveStringSel = [:]
         append("▶︎ Live Mode on.")
         player.begin { [weak self] ok in
             guard let self else { return }
-            if ok { self.allLampsOffLive() }       // clean slate
+            if ok { self.allLiveOff() }            // clean slate
             else { self.liveMode = false; self.activeMode = .none; self.previewPlayer = nil }
         }
     }
@@ -707,7 +832,17 @@ final class Controller: ObservableObject {
         previewTarget = nil
         liveLampLevel = [:]
         liveProfileB = [:]
+        liveStringSel = [:]
         if activeMode == .manual { activeMode = .none }
+    }
+
+    /// Everything off for the current board type when a live session starts.
+    private func allLiveOff() {
+        if effectiveBoard == .giOCD {
+            for s in 1...6 { setString(s, level: 0) }
+        } else {
+            allLampsOffLive()
+        }
     }
 
     // MARK: LED live controls
@@ -766,7 +901,38 @@ final class Controller: ObservableObject {
         setProfileLamps(p, toLevel: manualLevel(led.profiles[p - 1].brightness[b]))
     }
 
-    // MARK: GI live control (unchanged fade)
+    // MARK: GI live controls (mirrors the LED profile 💡 + B-click behavior)
+
+    /// Which B a lit string is showing: the row (normal/active) and index 0…7.
+    struct GIStringSel: Equatable { var active: Bool; var b: Int }
+    @Published var liveStringSel: [Int: GIStringSel] = [:]   // string id → shown B
+
+    private func setString(_ id: Int, level: Int) {
+        previewPlayer?.setLevel { try $0.setTestBrightness(string: id, bright: level) }
+    }
+
+    /// 💡 toggle: on → light the string at its Normal B8; off → string off.
+    func liveToggleString(_ id: Int) {
+        guard liveMode else { return }
+        if liveStringSel[id] != nil {
+            liveStringSel[id] = nil
+            setString(id, level: 0)
+        } else {
+            liveStringSel[id] = .init(active: false, b: 7)
+            setString(id, level: manualLevel(gi.strings[id - 1].normal[7]))
+        }
+    }
+
+    /// Drive a lit string to a specific B (normal or active row) right now —
+    /// called on B-clicks and live edits, same as the LED page.
+    func liveShowStringB(_ id: Int, active: Bool, _ b: Int) {
+        guard liveMode, liveStringSel[id] != nil else { return }
+        liveStringSel[id] = .init(active: active, b: b)
+        let str = gi.strings[id - 1]
+        setString(id, level: manualLevel(active ? str.activeBright[b] : str.normal[b]))
+    }
+
+    // MARK: GI fade preview (legacy path, no longer wired to the UI)
 
     func togglePreview(_ key: PreviewKey) {
         guard liveMode, let player = previewPlayer else { append("Turn on Live Mode first."); return }
@@ -993,7 +1159,7 @@ struct ContentView: View {
                     .hint("The USB serial port your OCD board is plugged into.", $buttonHint)
                 Button("Connect") { c.readVersion() }
                     .keyboardShortcut(.defaultAction)
-                    .hint("Talk to the board — detects whether it's LED or GI OCD and its firmware.", $buttonHint)
+                    .hint("Talk to the board — detects whether it's LED or GI OCD and loads the settings currently on it.", $buttonHint)
                 Button("Scan") { c.refreshPorts() }
                     .hint("Rescan for USB serial ports.", $buttonHint)
                 if c.isBusy { ProgressView().controlSize(.small) }
@@ -1040,8 +1206,10 @@ struct ContentView: View {
             profileActiveB: { c.liveProfileB[$0] },
             toggleProfile: { c.liveToggleProfile($0) },
             showProfileB: { c.liveShowProfileB($0, $1) },
-            giActive: { c.previewTarget == .giString($0) },
-            toggleGI: { c.togglePreview(.giString($0)) })
+            stringActive: { c.liveStringSel[$0] != nil },
+            stringShownB: { c.liveStringSel[$0].map { (active: $0.active, b: $0.b) } },
+            toggleString: { c.liveToggleString($0) },
+            showStringB: { c.liveShowStringB($0, active: $1, $2) })
     }
 
     @ViewBuilder private var editor: some View {
@@ -1090,16 +1258,51 @@ struct ContentView: View {
                     .hint("Load a configuration you exported to a file earlier.", $buttonHint)
             }
             HStack(spacing: 20) {
-                Button { c.applySettings() } label: { Text("Send").frame(maxWidth: .infinity) }
-                    .buttonStyle(.borderedProminent).disabled(needsBoard)
-                    .hint("Write your settings to the board so you can see them right away.", $buttonHint)
+                // Send: green while there are unsent changes (regular mode only).
+                Group {
+                    if !c.liveMode && c.hasUnsentChanges {
+                        Button { c.applySettings() } label: { Text("Send").frame(maxWidth: .infinity) }
+                            .buttonStyle(.borderedProminent).tint(.green)
+                            .disabled(needsBoard)
+                    } else {
+                        Button { c.applySettings() } label: { Text("Send").frame(maxWidth: .infinity) }
+                            .buttonStyle(.bordered)
+                            .disabled(needsBoard || c.liveMode)
+                    }
+                }
+                .hint(c.liveMode
+                      ? "Disabled in Live Mode — Commit Changes sends and saves in one step."
+                      : c.hasUnsentChanges
+                      ? "You have unsent changes — press to write them to the board."
+                      : "Write your settings to the board so you can see them right away.", $buttonHint)
                 Button { c.exportConfig() } label: { Text("Export").frame(maxWidth: .infinity) }
                     .buttonStyle(.bordered)
                     .hint("Back your whole setup up to a file.", $buttonHint)
             }
-            Button { c.save() } label: { Text("Save").frame(maxWidth: .infinity) }
-                .buttonStyle(.bordered).disabled(needsBoard)
-                .hint("Store the settings on the board permanently — they survive power-off.", $buttonHint)
+            // Save (regular; red after a Send until stored) /
+            // Commit Changes (Live Mode; red while uncommitted).
+            Group {
+                if c.liveMode ? c.hasUnsentChanges : c.hasUnsavedSends {
+                    Button { c.saveAction() } label: {
+                        Text(c.liveMode ? "Commit Changes" : "Save").frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent).tint(.red)
+                    .disabled(needsBoard)
+                } else {
+                    Button { c.saveAction() } label: {
+                        Text(c.liveMode ? "Commit Changes" : "Save").frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(needsBoard)
+                }
+            }
+            .hint(c.liveMode
+                  ? (c.hasUnsentChanges
+                     ? "You have uncommitted changes — press to send and store them on the board (Live Mode stays on)."
+                     : "Everything is committed. Edit a value and this lights up red until you commit again.")
+                  : c.hasUnsavedSends
+                  ? "The board received settings that aren't stored yet — press to make them permanent."
+                  : "Store the settings on the board permanently — they survive power-off.", $buttonHint)
             modeButton("Live Mode", active: c.liveMode) {
                 c.toggleLiveMode()
             }

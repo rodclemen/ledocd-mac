@@ -35,7 +35,8 @@ over its FTDI USB-serial cable and lets you:
   activity response, fade speed, 50 Hz, output frequency).
 - **Send** settings to the board, **Save** them permanently, **Read** back
   what's stored, and **Import/Export** configs as files (compatible with the
-  original Windows app's XML format).
+  original Windows app's XML format). The buttons guide the workflow: Send
+  turns green when you have unsent edits, Save turns red until they're stored.
 - Test hardware with **Manual Test** (light any lamp by hand, checkerboard
   pattern), or explore the whole app with **Simulate Board** — no hardware
   needed.
@@ -45,14 +46,16 @@ over its FTDI USB-serial cable and lets you:
 1. Plug the board into your Mac with its USB cable (macOS includes the FTDI
    driver; the port appears as `/dev/cu.usbserial-…`).
 2. Launch the app, click **Scan**, pick the port under **COM Select**, click
-   **Connect** — the app detects LED vs GI OCD and the lamp matrix
-   automatically.
+   **Connect** — the app detects LED vs GI OCD and the lamp matrix, and loads
+   the settings currently on the board.
 3. Pick your machine under **Game Select** (the manufacturer tags filter the
    list; the detected one lights green).
-4. Set each lamp's profile in the **Select** column; shape each profile's
+4. Set each lamp's profile in the **Profile** column; shape each profile's
    B1–B8 brightness curve and Delay.
-5. Turn on **Live Mode** to see profiles on the real playfield as you edit,
-   then **Send** (try it) and **Save** (keep it after power-off).
+5. **Send** (green when you have unsent edits) tries your settings on the
+   board; **Save** (red until pressed) stores them permanently. Or turn on
+   **Live Mode**, tune while watching the real playfield, and press
+   **Commit Changes** — send + save in one press.
 
 The **Help → LED OCD Help…** menu opens a full manual covering every feature.
 
