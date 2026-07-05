@@ -38,10 +38,10 @@ awk -v v="$VERSION" '
 ' CHANGELOG.md > "$NOTES_FILE"
 if [ ! -s "$NOTES_FILE" ]; then
     echo "See CHANGELOG.md for details." > "$NOTES_FILE"
-    echo "(No CHANGELOG section found for $VERSION — using a generic note.)"
+    echo "(No CHANGELOG section found for $VERSION - using a generic note.)"
 fi
 
-echo "==> Creating GitHub release $TAG…"
+echo "==> Creating GitHub release $TAG..."
 git push
 gh release create "$TAG" "dist/LED-OCD.dmg" \
     --title "LED OCD for Mac $VERSION" \
