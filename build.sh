@@ -8,8 +8,10 @@ cd "$(dirname "$0")"
 APP_NAME="LED OCD"
 BUNDLE_ID="com.rodclemen.ledocd"
 EXE_NAME="LEDOCD"
+# Version scheme: bump the LAST number for every release (0.9.2, 0.9.3, …,
+# 0.9.566, …) — it never rolls over. 1.0 happens only as a deliberate milestone.
 VERSION="0.9.1"
-BUILD="1"
+BUILD="${VERSION##*.}"   # CFBundleVersion derived from the last number
 # Code-signing identity — nothing personal is hardcoded:
 #   1. $LEDOCD_SIGN_ID, if set (explicit override)
 #   2. the first "Developer ID Application" certificate in this Mac's keychain
