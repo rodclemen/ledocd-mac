@@ -31,6 +31,14 @@ struct LEDOCDApp: App {
                 window.makeFirstResponder(nil)
                 return nil
             }
+            // Plain "i" toggles the manual — an event monitor rather than a menu
+            // key equivalent so it can never fire while typing in a text field.
+            if event.charactersIgnoringModifiers == "i",
+               event.modifierFlags.intersection(.deviceIndependentFlagsMask).isEmpty,
+               !(NSApp.keyWindow?.firstResponder is NSTextView) {
+                HelpWindowController.shared.toggle()
+                return nil
+            }
             return event
         }
         // Clicking anywhere that isn't a text field drops focus. Done as an
@@ -82,7 +90,7 @@ struct LEDOCDApp: App {
                 }
             }
             CommandGroup(replacing: .help) {
-                Button("LED OCD Help…") { showLEDOCDInfo() }
+                Button("LEDOCD Manual") { showLEDOCDInfo() }
                 Button("LED OCD website") {
                     if let url = URL(string: "https://ledocd.com") {
                         NSWorkspace.shared.open(url)
@@ -256,10 +264,12 @@ final class Controller: ObservableObject {
     func refreshPorts() {
         ports = SerialPort.availablePorts()
         if selectedPort.isEmpty || !ports.contains(selectedPort) {
-            selectedPort = ports.first ?? ""
+            // The board's FTDI cable shows up as cu.usbserial-*; prefer it over
+            // any other serial devices the Mac happens to expose.
+            selectedPort = ports.first { $0.contains("cu.usbserial-") } ?? ports.first ?? ""
         }
         append(ports.isEmpty
-            ? "No USB serial ports found. Plug in the board's FTDI cable, then Refresh."
+            ? "No USB serial ports found. Plug in the board's FTDI cable, then Scan."
             : "Ports: \(ports.joined(separator: ", "))")
     }
 
@@ -440,7 +450,7 @@ final class Controller: ObservableObject {
             simulated = false
             versionInfo = nil
             ports = SerialPort.availablePorts()
-            selectedPort = ports.first ?? ""
+            selectedPort = ports.first { $0.contains("cu.usbserial-") } ?? ports.first ?? ""
             append("• Simulation off.")
             return
         }
@@ -501,6 +511,9 @@ final class Controller: ObservableObject {
 
     func readSettings() {
         guard !selectedPort.isEmpty else { append("Select a port first."); return }
+        if effectiveBoard == .ledOCD && selectedPreset == nil {
+            append("Tip: select your game before Read so the board's values are matched to the right lamps.")
+        }
         endLive(returnToNormal: true)
         let path = selectedPort
         let board = effectiveBoard
@@ -1097,16 +1110,28 @@ struct ContentView: View {
             header
             Divider()
             editor
+                // Pinned to the window's right edge (the editor content itself
+                // lives in a horizontal scroller and can't reach the edge).
+                .overlay(alignment: .topTrailing) {
+                    Button { showLEDOCDInfo() } label: {
+                        Image(systemName: "questionmark.circle")
+                            .font(.system(size: 15))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.borderless)
+                    .hint("Open the LEDOCD manual (or press \u{201C}i\u{201D}).", $buttonHint)
+                    .padding(.top, 16).padding(.trailing, 16)
+                }
             if showLog { logPane }
         }
-        .background(Color.black.opacity(0.06))
+        .background(Theme.shade)
         .overlay(alignment: .topTrailing) {
             // No overlay for .manual (Live Mode / Manual Test) — their green
             // buttons already show the state; keep it for PASSTHROUGH etc.
             if c.activeMode != .none && c.activeMode != .manual {
                 Text(c.activeMode.label)
                     .font(.headline).bold()
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Theme.alert)
                     .padding(.top, 14).padding(.trailing, 18)
                     .allowsHitTesting(false)
             }
@@ -1116,7 +1141,6 @@ struct ContentView: View {
             c.refreshMachineData()
         }
         .onAppear {
-            c.refreshPorts()
             DispatchQueue.main.async {
                 // Don't let macOS auto-focus the first text field (the Incandes name).
                 NSApp.keyWindow?.makeFirstResponder(nil)
@@ -1157,15 +1181,30 @@ struct ContentView: View {
                               label: { $0.isEmpty ? "—" : $0 },
                               width: 230)
                     .hint("The USB serial port your OCD board is plugged into.", $buttonHint)
-                Button("Connect") { c.readVersion() }
-                    .keyboardShortcut(.defaultAction)
-                    .hint("Talk to the board — detects whether it's LED or GI OCD and loads the settings currently on it.", $buttonHint)
+                // Deliberately NOT the window's default button: that styling always
+                // fills with the system accent color, which on a green-accent Mac
+                // makes "green = connected" true from the moment the app opens.
+                // Plain like Scan until a board answers, then a green fill.
+                // No Return-key shortcut here: a button whose key equivalent is
+                // Return becomes the window's DEFAULT button, and macOS always
+                // fills that with the system accent color (green on this Mac).
+                if c.versionInfo != nil {
+                    Button("Connect") { c.readVersion() }
+                        .buttonStyle(.borderedProminent)
+                        .tint(Theme.good)
+                        .disabled(c.isBusy)
+                        .hint("Talk to the board — detects whether it's LED or GI OCD and loads the settings currently on it.", $buttonHint)
+                } else {
+                    Button("Connect") { c.readVersion() }
+                        .disabled(c.selectedPort.isEmpty || c.isBusy)
+                        .hint("Talk to the board — detects whether it's LED or GI OCD and loads the settings currently on it.", $buttonHint)
+                }
                 Button("Scan") { c.refreshPorts() }
                     .hint("Rescan for USB serial ports.", $buttonHint)
                 if c.isBusy { ProgressView().controlSize(.small) }
                 Spacer(minLength: 12)
                 if c.simulated {
-                    Text("SIMULATED").font(.caption.bold()).foregroundStyle(.red)
+                    Text("SIMULATED").font(.caption.bold()).foregroundStyle(Theme.alert)
                 }
             }
             HStack(spacing: 16) {
@@ -1189,7 +1228,7 @@ struct ContentView: View {
                 if let v = c.versionInfo {
                     Text("Detected: ")
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(Color(white: 0.80))
+                        .foregroundColor(Theme.headerDim)
                     + Text("\(v.board.rawValue) v\(v.version)")
                         .font(.system(size: 15, weight: .thin))   // weight 200
                 }
@@ -1252,17 +1291,17 @@ struct ContentView: View {
             HStack(spacing: 20) {
                 Button { c.readSettings() } label: { Text("Read").frame(maxWidth: .infinity) }
                     .buttonStyle(.bordered).disabled(needsBoard)
-                    .hint("Fetch the settings currently stored on the board.", $buttonHint)
+                    .hint("Load the settings stored on the board into the app — discards unsent edits. Select your game first; if you had the wrong game type selected, fix it and Read again.", $buttonHint)
                 Button { c.importConfig() } label: { Text("Import").frame(maxWidth: .infinity) }
                     .buttonStyle(.bordered)
-                    .hint("Load a configuration you exported to a file earlier.", $buttonHint)
+                    .hint("Load a configuration you exported earlier. It only fills the app — press Send, then Save to put it on the board.", $buttonHint)
             }
             HStack(spacing: 20) {
                 // Send: green while there are unsent changes (regular mode only).
                 Group {
                     if !c.liveMode && c.hasUnsentChanges {
                         Button { c.applySettings() } label: { Text("Send").frame(maxWidth: .infinity) }
-                            .buttonStyle(.borderedProminent).tint(.green)
+                            .buttonStyle(.borderedProminent).tint(Theme.good)
                             .disabled(needsBoard)
                     } else {
                         Button { c.applySettings() } label: { Text("Send").frame(maxWidth: .infinity) }
@@ -1277,7 +1316,7 @@ struct ContentView: View {
                       : "Write your settings to the board so you can see them right away.", $buttonHint)
                 Button { c.exportConfig() } label: { Text("Export").frame(maxWidth: .infinity) }
                     .buttonStyle(.bordered)
-                    .hint("Back your whole setup up to a file.", $buttonHint)
+                    .hint("Back your whole setup up to a file — keep one per machine; it's the only copy on your Mac.", $buttonHint)
             }
             // Save (regular; red after a Send until stored) /
             // Commit Changes (Live Mode; red while uncommitted).
@@ -1286,7 +1325,7 @@ struct ContentView: View {
                     Button { c.saveAction() } label: {
                         Text(c.liveMode ? "Commit Changes" : "Save").frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent).tint(.red)
+                    .buttonStyle(.borderedProminent).tint(Theme.alert)
                     .disabled(needsBoard)
                 } else {
                     Button { c.saveAction() } label: {
@@ -1327,7 +1366,7 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    private func modeButton(_ title: String, active: Bool, tint: Color = .green,
+    private func modeButton(_ title: String, active: Bool, tint: Color = Theme.good,
                             fullWidth: Bool = true, _ action: @escaping () -> Void) -> some View {
         Group {
             if active {

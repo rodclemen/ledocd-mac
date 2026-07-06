@@ -10,7 +10,7 @@ BUNDLE_ID="com.rodclemen.ledocd"
 EXE_NAME="LEDOCD"
 # Version scheme: bump the LAST number for every release (0.9.2, 0.9.3, …,
 # 0.9.566, …) — it never rolls over. 1.0 happens only as a deliberate milestone.
-VERSION="0.9.2"
+VERSION="0.9.3"
 BUILD="${VERSION##*.}"   # CFBundleVersion derived from the last number
 # Code-signing identity — nothing personal is hardcoded:
 #   1. $LEDOCD_SIGN_ID, if set (explicit override)
@@ -46,6 +46,9 @@ cp "$BIN_PATH/$EXE_NAME" "$APP/Contents/MacOS/$EXE_NAME"
 
 echo "==> Bundling machine presets (CSV)…"
 cp data/*.csv "$APP/Contents/Resources/data/"
+
+echo "==> Bundling the manual…"
+cp docs/manual.html "$APP/Contents/Resources/manual.html"
 
 echo "==> Generating app icon (asset catalog, like stock macOS apps)…"
 # Finder/IconServices reliably render the icon from a COMPILED ASSET CATALOG

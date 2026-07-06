@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Beginner-friendly documentation for LED OCD for Mac.">
+  <title>LED OCD for Mac — User Manual</title>
+  <style>
+    :root {
+      --ink: #182022;
+      --muted: #607071;
+      --line: #d9e2df;
+      --canvas: #f5f7f5;
+      --surface: #ffffff;
+      --panel: #edf3f0;
+      --brand: #106b55;
+      --brand-dark: #0b4f3f;
+      --gold: #b57a0d;
+      --red: #a54242;
+      --shadow: 0 14px 36px rgba(24, 32, 34, .08);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--canvas); color: var(--ink); font: 16px/1.65 var(--sans); }
+    a { color: var(--brand-dark); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+    a:hover { color: var(--brand); }
+    code { font-family: var(--mono); font-size: .9em; background: #e8eeeb; padding: .1rem .35rem; border-radius: 5px; }
+
+    .topbar { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.91); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+    .topbar-inner { max-width: 1380px; min-height: 65px; margin: auto; padding: 0 28px; display: flex; align-items: center; gap: 24px; }
+    .wordmark { white-space: nowrap; text-decoration: none; color: var(--ink); font-weight: 800; letter-spacing: -.025em; }
+    .wordmark .led-l { color: #b23c3c; }
+    .wordmark .led-e { color: var(--brand); }
+    .wordmark .led-d { color: #2f5fa8; }
+    .topnav { margin-left: auto; display: flex; align-items: center; gap: 18px; font-size: .9rem; }
+    .topnav a { color: #40504f; text-decoration: none; font-weight: 650; }
+    .topnav a:hover { color: var(--brand); }
+
+    .hero { background: radial-gradient(circle at 75% 15%, #d9eee6 0, #eff7f3 29%, #f5f7f5 62%); border-bottom: 1px solid var(--line); }
+    .hero-inner { max-width: 1380px; margin: auto; padding: 72px 28px 64px; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr); gap: 50px; align-items: center; }
+    .eyebrow { margin: 0 0 12px; font-size: .78rem; font-weight: 800; letter-spacing: .12em; color: var(--brand); text-transform: uppercase; }
+    h1 { margin: 0; max-width: 850px; font-size: clamp(2.65rem, 5vw, 5.4rem); line-height: .98; letter-spacing: -.065em; }
+    .lead { max-width: 760px; margin: 24px 0 0; font-size: clamp(1.08rem, 1.7vw, 1.32rem); color: #415150; }
+    .hero-credit { max-width: 760px; margin: 18px 0 0; color: #5a6a67; font-size: .91rem; }
+    .hero-credit a { font-weight: 700; }
+    .hero-actions { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 12px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: .76rem 1.05rem; text-decoration: none; font-weight: 750; border: 1px solid transparent; }
+    .button.primary { color: #fff; background: var(--brand); box-shadow: 0 8px 20px rgba(16,107,85,.20); }
+    .button.primary:hover { color: #fff; background: var(--brand-dark); }
+    .button.secondary { color: var(--brand-dark); background: #fff; border-color: #bfd4cb; }
+
+    .hero-card { background: #173d35; color: #eef8f4; padding: 28px; border-radius: 23px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+    .hero-card::after { content: ""; position: absolute; width: 210px; height: 210px; right: -75px; bottom: -100px; border: 1px solid rgba(255,255,255,.13); border-radius: 50%; box-shadow: 0 0 0 24px rgba(255,255,255,.05), 0 0 0 48px rgba(255,255,255,.04); }
+    .hero-card p { color: #c8dfd5; margin: 5px 0 0; font-size: .94rem; }
+    .hero-card strong { display:block; font-size: 1.08rem; }
+    .signal-list { list-style: none; padding: 0; margin: 20px 0 0; display: grid; gap: 10px; }
+    .signal-list li { position: relative; padding-left: 25px; font-size: .92rem; }
+    .signal-list li::before { content: ""; position: absolute; left: 0; top: .52em; width: 10px; height: 10px; border-radius: 50%; background: #9fddbf; box-shadow: 0 0 0 5px rgba(159,221,191,.13); }
+
+    .layout { max-width: 1380px; margin: 0 auto; padding: 44px 28px 84px; display: grid; grid-template-columns: 254px minmax(0, 1fr); gap: 48px; }
+    .sidebar { align-self: start; position: sticky; top: 91px; }
+    .sidebar-title { margin: 0 0 10px; color: var(--muted); font-size: .73rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .sidenav { display: grid; gap: 3px; }
+    .sidenav a { text-decoration: none; color: #475655; padding: .42rem .65rem; border-radius: 8px; font-size: .93rem; }
+    .sidenav a:hover { color: var(--brand-dark); background: #e7f0ec; }
+    main { min-width: 0; }
+    section { scroll-margin-top: 90px; margin-bottom: 70px; }
+    h2 { margin: 0 0 12px; font-size: clamp(1.85rem, 3vw, 2.75rem); line-height: 1.07; letter-spacing: -.045em; }
+    h3 { margin: 38px 0 10px; font-size: 1.23rem; line-height: 1.22; letter-spacing: -.025em; }
+    p { margin: 0 0 16px; }
+    .section-intro { max-width: 780px; color: #465755; font-size: 1.07rem; }
+
+    .notice { margin: 26px 0; padding: 22px 23px 21px; border-radius: var(--radius); background: #fff7df; border: 1px solid #ead398; border-left: 6px solid var(--gold); }
+    .notice h3 { margin: 0 0 6px; color: #73500a; font-size: 1.05rem; }
+    .notice p:last-child { margin-bottom: 0; }
+    .callout { padding: 24px; background: var(--panel); border: 1px solid #d5e6df; border-radius: var(--radius); margin: 27px 0; }
+    .callout h3 { margin: 0 0 9px; color: var(--brand-dark); }
+    .callout p:last-child { margin-bottom: 0; }
+
+    .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 25px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: 0 4px 16px rgba(24, 32, 34, .035); }
+    .card-number { color: var(--brand); font-size: .76rem; font-weight: 850; letter-spacing: .09em; }
+    .card h3 { margin: 7px 0 9px; font-size: 1.15rem; }
+    .card p { color: #556563; font-size: .94rem; margin: 0; }
+
+    .steps { list-style: none; padding: 0; margin: 27px 0 0; display: grid; gap: 14px; counter-reset: instruction; }
+    .steps li { counter-increment: instruction; position: relative; padding: 20px 20px 20px 72px; border: 1px solid var(--line); background: #fff; border-radius: 15px; }
+    .steps li::before { content: counter(instruction); position: absolute; left: 20px; top: 20px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--brand); color: #fff; font-weight: 800; font-size: .9rem; }
+    .steps strong { display: block; margin-bottom: 3px; }
+    .steps p { margin: 0; color: #536361; }
+
+    .flow { margin: 28px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 750; color: #244840; }
+    .flow span { background: #e2f0ea; padding: .45rem .7rem; border-radius: 999px; }
+    .flow b { color: #94a49f; }
+
+    .table-wrap { overflow-x: auto; margin: 25px 0; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    table { width: 100%; border-collapse: collapse; min-width: 670px; }
+    th, td { text-align: left; padding: 15px 17px; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { background: #f0f5f2; color: #445554; font-size: .78rem; letter-spacing: .055em; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    td:first-child { font-weight: 750; color: #233f39; white-space: nowrap; }
+    .label { display: inline-block; padding: .18rem .46rem; border-radius: 999px; font-size: .75rem; font-weight: 800; }
+    .label.green { background: #dff2e7; color: #17613e; }
+    .label.red { background: #f7e2e2; color: #923d3d; }
+    .label.yellow { background: #fff2c7; color: #765b00; }
+
+    .mini-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+    .mini-grid .card h3 { margin-top: 0; }
+    .rule { height: 1px; margin: 42px 0; background: var(--line); }
+    footer { background: #15231f; color: #d5e4de; }
+    .footer-inner { max-width: 1380px; margin: auto; padding: 28px; display: flex; justify-content: space-between; gap: 20px; align-items: center; font-size: .87rem; }
+    .footer-inner p { margin: 0; }
+    .footer-inner a { color: #a8e2c5; }
+
+    @media (max-width: 1000px) { .topnav { display: none; } .hero-inner { grid-template-columns: 1fr; gap: 32px; } .layout { grid-template-columns: 1fr; gap: 22px; } .sidebar { position: static; padding-bottom: 18px; border-bottom: 1px solid var(--line); } .sidenav { grid-template-columns: repeat(2, minmax(0,1fr)); } .cards { grid-template-columns: 1fr; } }
+    @media (max-width: 620px) { .topbar-inner, .hero-inner, .layout, .footer-inner { padding-left: 18px; padding-right: 18px; } .hero-inner { padding-top: 52px; padding-bottom: 50px; } .sidenav { grid-template-columns: 1fr; } .mini-grid { grid-template-columns: 1fr; } .footer-inner { display:block; } .footer-inner p + p { margin-top: 8px; } }
+    @media print { .topbar, .sidebar, .hero-actions { display:none; } body { background:#fff; } .hero { background:#fff; } .hero-inner, .layout { display:block; padding: 22px; max-width:none; } .hero-card { display:none; } section { break-inside: avoid; margin-bottom:30px; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="wordmark" href="#top"><span class="led-l">L</span><span class="led-e">E</span><span class="led-d">D</span> OCD <small>for Mac</small></a>
+      <nav class="topnav" aria-label="Main navigation">
+        <a href="#start">Get started</a>
+        <a href="#workflow">Change settings</a>
+        <a href="#sections">App guide</a>
+        <a href="#troubleshooting">Troubleshooting</a>
+      </nav>
+    </div>
+  </header>
+
+  <div id="top" class="hero">
+    <div class="hero-inner">
+      <div>
+        <p class="eyebrow">User manual</p>
+        <h1>Make your LEDs look like they belong in a pinball machine.</h1>
+        <p class="lead">LED OCD for Mac lets you configure your installed LED OCD board: assign lamps to brightness profiles, fine-tune the fade, and permanently save the result to the board.</p>
+        <p class="hero-credit">LED OCD hardware and the original LED OCD Windows software were created by <a href="https://ledocd.com/" target="_blank" rel="noopener">Harold at ledocd.com</a>. This Mac manual is an independent companion guide and draws on the established LED OCD workflow and terminology.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#workflow">Set up your first machine</a>
+          <a class="button secondary" href="#game-select">Why settings are not in Game Select</a>
+        </div>
+      </div>
+      <aside class="hero-card" aria-label="The one thing to remember">
+        <strong>The one thing to remember</strong>
+        <p>The app edits the board. The board keeps the settings.</p>
+        <ul class="signal-list">
+          <li><b>Send</b> makes your changes active.</li>
+          <li><b>Save</b> makes your changes permanent.</li>
+          <li><b>Export</b> keeps a backup on your Mac.</li>
+        </ul>
+      </aside>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <p class="sidebar-title">In this guide</p>
+      <nav class="sidenav" aria-label="Documentation navigation">
+        <a href="#start">What the app does</a>
+        <a href="#game-select">Game Select explained</a>
+        <a href="#workflow">First-time workflow</a>
+        <a href="#live-mode">Live Mode</a>
+        <a href="#sections">Each part of the app</a>
+        <a href="#backup">Import, Export & backups</a>
+        <a href="#troubleshooting">Common questions</a>
+        <a href="#quick-reference">Quick reference</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section id="start">
+        <p class="eyebrow">Part 1</p>
+        <h2>What the app does</h2>
+        <p class="section-intro">Your pinball machine decides when a lamp is on. LED OCD changes how that lamp looks when it turns on: brightness, fade, and the character of the transition.</p>
+        <div class="cards">
+          <article class="card"><p class="card-number">01</p><h3>The pinball machine</h3><p>Still controls the game and tells each lamp when to switch on or off.</p></article>
+          <article class="card"><p class="card-number">02</p><h3>The LED OCD board</h3><p>Sits in the machine and applies your brightness and fading choices to the lamps.</p></article>
+          <article class="card"><p class="card-number">03</p><h3>The Mac app</h3><p>Connects to the board, lets you edit its configuration, and helps you save a backup.</p></article>
+        </div>
+        <div class="callout">
+          <h3>Think of a profile as a brightness recipe</h3>
+          <p>There are eight profiles. Each profile has a name, a dimmest level, a brightest level, and a fade delay. You assign lamps to a profile; lamps sharing a profile share the same behavior.</p>
+        </div>
+        <p>For example, you might use one profile for soft inserts, another for bright inserts, and a third for lamps that need a slower fade. You are not programming the machine. You are deciding how its LEDs should behave.</p>
+      </section>
+
+      <section id="game-select">
+        <p class="eyebrow">Important before you begin</p>
+        <h2>Game Select gives you lamp names — not preset lamp settings.</h2>
+        <p class="section-intro">This distinction matters. Choosing a game makes the lamp table understandable; it does not load somebody else’s brightness setup onto your board.</p>
+        <div class="notice">
+          <h3>Why no brightness or profile values are stored with each game?</h3>
+          <p>The game files contain the lamp number and lamp name, such as <em>Left Ramp</em> or <em>Jackpot</em>. They do not include brightness, fade, or profile assignments. Those settings depend heavily on the LEDs installed in the machine: LED colour, make, diffuser, brightness, and even how a particular game’s inserts look. A setting that looks perfect with one LED set may look terrible with another.</p>
+        </div>
+        <p>For that reason, LED OCD does not pretend there is one correct configuration for every machine. You create the settings that suit <strong>your</strong> LEDs and <strong>your</strong> machine.</p>
+        <div class="mini-grid">
+          <article class="card"><h3>What Game Select does</h3><p>Shows the proper lamp numbers and friendly insert names, so you know exactly which lamp you are assigning to a profile. It also selects the correct lamp layout for the machine type.</p></article>
+          <article class="card"><h3>What it does not do</h3><p>It does not reset your current brightness or profile values, and it does not retrieve a ready-made LED configuration. Selecting a different game simply changes the lamp names shown in the table.</p></article>
+        </div>
+        <div class="callout">
+          <h3>Keep one export file per machine</h3>
+          <p>When you have tuned a machine to your liking, use <strong>Export</strong>. That file contains your eight profiles and your lamp-to-profile assignments. Later, use <strong>Import</strong> to restore the configuration, then <strong>Send</strong> and <strong>Save</strong> it to the board.</p>
+        </div>
+      </section>
+
+      <section id="workflow">
+        <p class="eyebrow">Part 2</p>
+        <h2>Change lamp settings and store them on the board</h2>
+        <p class="section-intro">This is the normal workflow for an installed LED OCD board. You can fine-tune as much as you like, but the basic routine stays pleasantly boring.</p>
+        <div class="flow" aria-label="Configuration flow"><span>Connect</span><b>→</b><span>Choose game</span><b>→</b><span>Assign profiles</span><b>→</b><span>Adjust</span><b>→</b><span>Send</span><b>→</b><span>Save</span></div>
+        <ol class="steps">
+          <li><strong>Turn on the pinball machine and connect USB.</strong><p>The LED OCD board must already be installed correctly. Connect its USB cable to the Mac and open LED OCD for Mac.</p></li>
+          <li><strong>Click Scan, choose the board, then click Connect.</strong><p>Select the USB serial connection, normally named something similar to <code>cu.usbserial-…</code>. The app identifies the board and automatically reads the settings currently stored on it. A green Connect button means the connection worked.</p></li>
+          <li><strong>Select your machine in Game Select.</strong><p>The lamp table now shows useful names for the lamps in that game. Select the correct machine type before reading or sending settings, especially when moving between WPC, Stern, or Capcom machines.</p></li>
+          <li><strong>Find the lamps you want to tune and choose their profile.</strong><p>In the lamp table, set the <strong>Profile</strong> number for each lamp. Several lamps can use the same profile, which makes consistent tuning much easier.</p></li>
+          <li><strong>Adjust the profile itself.</strong><p>Set B1 for the dimmest level, B8 for the brightest level, and Delay for fade speed. Leave Advanced off at first; the app will calculate the middle brightness steps automatically.</p></li>
+          <li><strong>Click Send and inspect the playfield.</strong><p>Send places the new configuration on the board so you can see the result immediately. A green Send button means there are changes in the app that the board has not yet received.</p></li>
+          <li><strong>Repeat until it looks right.</strong><p>Make small changes, Send again, and compare. For faster hands-on tuning, use Live Mode.</p></li>
+          <li><strong>Click Save.</strong><p>Save writes the active configuration into the board’s permanent memory. A red Save button means you have sent changes that will be lost after power-off unless you save them.</p></li>
+          <li><strong>Export a backup.</strong><p>Once you are happy with the result, Export a copy to your Mac. The board now has your permanent settings, and the Mac has a recoverable backup.</p></li>
+        </ol>
+      </section>
+
+      <section id="live-mode">
+        <p class="eyebrow">Optional, but recommended</p>
+        <h2>Live Mode: tune while watching the actual lamps</h2>
+        <p class="section-intro">Live Mode is the best way to judge brightness and fade. The app sends profile edits to the board immediately, so you can adjust a value while looking at the playfield.</p>
+        <div class="mini-grid">
+          <article class="card"><h3>How to use it</h3><p>Connect, select the correct game, then open Live Mode. Press the bulb button beside a profile to light every lamp that uses it. Change B1, B8, and Delay while watching the lamps.</p></article>
+          <article class="card"><h3>When you are done</h3><p>Click <strong>Commit Changes</strong>. In Live Mode, this single action both sends the changes and permanently saves them. Leaving Live Mode returns lamp control to normal play.</p></article>
+        </div>
+        <div class="notice">
+          <h3>Do not forget to commit.</h3>
+          <p>Live Mode makes changes visible immediately, but visible is not the same as permanently saved. Commit Changes is red while there are edits that have not yet been stored on the board.</p>
+        </div>
+      </section>
+
+      <section id="sections">
+        <p class="eyebrow">Part 3</p>
+        <h2>What each part of the app is for</h2>
+        <p class="section-intro">Use this section as a reference after you know the basic workflow.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Section</th><th>What it does</th><th>When you use it</th></tr></thead>
+            <tbody>
+              <tr><td>Scan</td><td>Finds available USB/serial connections on your Mac.</td><td>After plugging the board into your Mac.</td></tr>
+              <tr><td>COM Select</td><td>Chooses which USB/serial connection the app should use.</td><td>Choose the board’s <code>cu.usbserial-…</code> connection.</td></tr>
+              <tr><td>Connect</td><td>Contacts the board, identifies it, and reads its current configuration.</td><td>At the start of every session.</td></tr>
+              <tr><td>Read</td><td>Loads the configuration currently stored on the board into the app.</td><td>To discard unsent edits, or after correcting a wrongly selected game type.</td></tr>
+              <tr><td>Game Select</td><td>Shows lamp numbers and insert names for your selected machine.</td><td>Before working in the lamp table.</td></tr>
+              <tr><td>Lamp table</td><td>Lists lamps and lets you choose which profile each lamp uses.</td><td>When assigning individual lamps or groups of lamps.</td></tr>
+              <tr><td>Profiles</td><td>Defines the eight brightness recipes used by the lamps.</td><td>When adjusting brightness and fade behavior.</td></tr>
+              <tr><td>Advanced</td><td>Lets you edit B2–B7 manually instead of calculating them automatically.</td><td>Only when normal B1/B8/Delay tuning is not enough.</td></tr>
+              <tr><td>Send</td><td>Transfers the app’s current settings to the board for immediate testing.</td><td>Every time you want to preview edits outside Live Mode.</td></tr>
+              <tr><td>Save</td><td>Stores the board’s current settings permanently.</td><td>After Send, before turning off the machine.</td></tr>
+              <tr><td>Manual Test</td><td>Temporarily lights individual lamps or test patterns for diagnosis.</td><td>For wiring checks and troubleshooting, not normal tuning.</td></tr>
+              <tr><td>Passthrough</td><td>Temporarily lets the machine drive lamps as if LED OCD were not intervening.</td><td>For a quick before-and-after comparison.</td></tr>
+              <tr><td>Log</td><td>Shows connection activity, errors, and useful messages.</td><td>First stop when something fails or behaves oddly.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Profile controls</h3>
+        <div class="mini-grid">
+          <article class="card"><h3>B1 — minimum brightness</h3><p>The first and dimmest level of the brightness ramp. Lower B1 makes the start gentler; higher B1 makes lamps look brighter sooner.</p></article>
+          <article class="card"><h3>B8 — maximum brightness</h3><p>The final and brightest level. Lower it when LEDs are harsh or overpowering; raise it when they are too subdued.</p></article>
+          <article class="card"><h3>Delay</h3><p>Controls how quickly the brightness steps change. Lower values are faster; higher values create a slower, smoother fade.</p></article>
+          <article class="card"><h3>B2 through B7</h3><p>The intermediate steps. The app calculates these automatically unless Advanced is switched on.</p></article>
+        </div>
+      </section>
+
+      <section id="backup">
+        <p class="eyebrow">Keep your work</p>
+        <h2>Import, Export, and the three places settings can live</h2>
+        <p class="section-intro">There is no hidden Mac database keeping your lamp setup. This is deliberate: the board is the working home; export files are your portable backups.</p>
+        <div class="cards">
+          <article class="card"><p class="card-number">BOARD</p><h3>Permanent machine settings</h3><p>Settings stay here only after Save or Commit Changes. These are the settings your pinball machine actually uses.</p></article>
+          <article class="card"><p class="card-number">APP</p><h3>Temporary working copy</h3><p>The app holds the current edit while it is open. Quit without exporting and there is no Mac-side copy to recover later.</p></article>
+          <article class="card"><p class="card-number">EXPORT FILE</p><h3>Your backup and transfer file</h3><p>Export saves the current profiles and lamp assignments as an XML file that can be imported later, including in the Windows software.</p></article>
+        </div>
+        <h3>Recommended habit</h3>
+        <p>Use a clear filename after every successful tuning session, for example <code>Attack_from_Mars_LED_setup_2026-07.xml</code>. It is cheap insurance. A good configuration takes longer to recreate than to export.</p>
+        <p>After importing a file, use <strong>Send</strong> and then <strong>Save</strong>. Import loads the file into the app; it does not automatically write it to the board.</p>
+      </section>
+
+      <section id="troubleshooting">
+        <p class="eyebrow">Common questions</p>
+        <h2>Things that often look like problems</h2>
+        <div class="mini-grid">
+          <article class="card"><h3>I selected my game, but the brightness settings did not change.</h3><p>That is expected. Game Select supplies lamp names and the correct lamp layout, not an LED preset. Import an exported configuration if you want to load saved tuning values.</p></article>
+          <article class="card"><h3>I sent changes, then turned the machine off. They are gone.</h3><p>Send is only a live transfer. Use Save after Send, or Commit Changes in Live Mode, to store the configuration permanently.</p></article>
+          <article class="card"><h3>The wrong lamps seem to have received the settings.</h3><p>Check that the correct game type is selected. If you changed Game Select after connecting, click Read again so the board configuration is decoded using the correct lamp layout.</p></article>
+          <article class="card"><h3>I cannot connect to the board.</h3><p>Click Scan again, select the USB serial device, check the USB cable, and look in the Log panel for the exact connection error.</p></article>
+          <article class="card"><h3>Everything is too complicated. Where should I start?</h3><p>Leave Advanced off. Use one profile for dim inserts, one for normal inserts, and one for bright inserts. Tune B1, B8, and Delay in Live Mode first.</p></article>
+          <article class="card"><h3>Can I experiment safely?</h3><p>Yes. Export your known-good configuration first. You can then experiment, re-import the backup, Send, and Save to return to the working setup.</p></article>
+        </div>
+      </section>
+
+      <section id="quick-reference">
+        <p class="eyebrow">At a glance</p>
+        <h2>Quick reference</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Colour</th><th>Meaning</th><th>What to do</th></tr></thead>
+            <tbody>
+              <tr><td><span class="label green">Green</span></td><td>Connected, active, or ready to send.</td><td>Green Send means the app contains changes that are not yet on the board.</td></tr>
+              <tr><td><span class="label red">Red</span></td><td>Something needs attention.</td><td>Red Save or Commit Changes means the current configuration is not yet permanent.</td></tr>
+              <tr><td><span class="label yellow">Yellow</span></td><td>A lamp or brightness level is currently being previewed.</td><td>Use it to judge the chosen profile on the real playfield.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">
+          <h3>The rule worth remembering</h3>
+          <p><strong>Send makes the change active. Save makes the change permanent.</strong></p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <p><strong>LED OCD for Mac</strong> — user documentation<br><span>LED OCD hardware and the original LED OCD Windows software were created by <a href="https://ledocd.com/" target="_blank" rel="noopener">Harold at ledocd.com</a>. This guide is an independent Mac companion manual.</span></p>
+      <p><a href="#top">Back to top ↑</a></p>
+    </div>
+  </footer>
+</body>
+</html>

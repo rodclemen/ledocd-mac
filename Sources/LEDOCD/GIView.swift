@@ -183,9 +183,9 @@ struct GIView: View {
                 .textFieldStyle(.plain)
                 .frame(width: wB).padding(.vertical, 3)
                 .background(RoundedRectangle(cornerRadius: 5)
-                    .fill(shown ? Color.yellow.opacity(0.35) : Color(nsColor: .textBackgroundColor)))
+                    .fill(shown ? Theme.lamp.opacity(0.35) : Color(nsColor: .textBackgroundColor)))
                 .overlay(RoundedRectangle(cornerRadius: 5)
-                    .stroke(shown ? Color.yellow : Color.primary.opacity(0.22), lineWidth: 1))
+                    .stroke(shown ? Theme.lamp : Color.primary.opacity(0.22), lineWidth: 1))
                 .focused($focusedBrightness, equals: key)
         } else if liveOn {
             // Locked middle value (Advanced off): tap to show it on the string.
@@ -195,7 +195,7 @@ struct GIView: View {
                     .foregroundStyle(.secondary)
                     .frame(width: wB).padding(.vertical, 3)
                     .background(RoundedRectangle(cornerRadius: 5)
-                        .fill(shown ? Color.yellow.opacity(0.35) : Color.clear))
+                        .fill(shown ? Theme.lamp.opacity(0.35) : Color.clear))
             }
             .buttonStyle(.plain)
         } else {

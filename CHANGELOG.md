@@ -1,5 +1,45 @@
 # Changelog — LED OCD macOS app
 
+## 0.9.3 — 2026-07-06
+
+A real user manual, honest button colors, and a tidier connect flow.
+
+- **New in-app manual:** the old built-in text manual is replaced by a styled
+  HTML manual (`docs/manual.html`, bundled into the app and rendered in a
+  WKWebView). External links open in the browser; the window sizes itself to
+  the screen (90% of the usable height, capped at 1150 pt wide). Menu item
+  renamed Help → "LEDOCD Manual"; pressing **i** toggles the manual open and
+  closed (event-monitor based, so it never fires while typing in a text
+  field); a **?** button pinned to the window's top-right edge opens it too.
+- **Connect flow:** the app no longer auto-scans at launch — Connect is
+  greyed out until Scan finds ports and one is selected, plain while
+  unconnected, and green once a board has answered. Scan pre-selects the
+  `cu.usbserial-*` port (the board's FTDI cable) over other serial devices.
+  Along the way: Connect/status colors no longer use the macOS accent color —
+  on a Mac with a green/red accent they lied about state (the default-button
+  styling and its Return-key equivalent were the culprits; Return no longer
+  triggers Connect).
+- **One palette (Theme.swift):** every deliberate color now comes from a
+  single source of truth (good/alert/lamp/amber + greys). Fixed the
+  registered-matrix pill using `.accentColor` (only matched Connect/Send's
+  green by coincidence on this Mac) and unified two different 6%-dim shades.
+- **Read guidance:** hover hint + log tip now explain to select the game
+  before Read (wrong game *type* decodes the board's values onto the wrong
+  lamps; Read again after fixing it). Import's tooltip warns it only fills
+  the app (Send + Save to store); Export's mentions keeping one file per
+  machine; Game Select's clarifies it loads names only, never settings.
+- **Fixed:** the no-ports log message told the user to press "Refresh" — the
+  button has been called Scan since 0.9.2.
+- README: documented the i/?/menu manual entry points, the bundled manual in
+  build.sh, a new "Wire protocol notes" section (frames, `<V>`/`<Q>`/`<S>`,
+  lamp↔col/row formulas, Capcom-B relay), and that Game Select stores no
+  settings. Removed the `manual.md` technical draft (its content now lives in
+  the README and the HTML manual).
+
+Spent twenty minutes and four rebuilds hunting the green button that wouldn't
+stop being green. It was the user's system accent color. The bug was in
+System Settings all along.
+
 ## 0.9.2 — 2026-07-05
 
 First round of real-hardware testing: a stuck-board bug, a guided Send/Save

@@ -74,14 +74,13 @@ struct MatrixPill: View {
     let action: () -> Void
 
     var body: some View {
-        let amber = Color(red: 0.78, green: 0.60, blue: 0.16)
         let shape = RoundedRectangle(cornerRadius: 4)
-        // Off = solid grey. On = accent (registered — matches Connect/Send), red (the
-        // "wrong" selected one), or amber (any other enabled manufacturer).
-        let fill: Color = !enabled ? Color(white: 0.40)
-                        : registered ? .accentColor
-                        : wrong ? .red
-                        : amber
+        // Off = solid grey. On = green (registered — matches Connect/Send), red
+        // (the "wrong" selected one), or amber (any other enabled manufacturer).
+        let fill: Color = !enabled ? Theme.pillOff
+                        : registered ? Theme.good
+                        : wrong ? Theme.alert
+                        : Theme.amber
         let fg: Color = (enabled && !registered && !wrong) ? .black : .white
         Button(action: action) {
             Text(title)
@@ -104,7 +103,7 @@ struct PreviewButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: isActive ? "lightbulb.fill" : "lightbulb")
-                .foregroundStyle(isActive ? Color.yellow
+                .foregroundStyle(isActive ? Theme.lamp
                                  : enabled ? Color.secondary
                                  : Color.secondary.opacity(0.3))   // clearly disabled
         }

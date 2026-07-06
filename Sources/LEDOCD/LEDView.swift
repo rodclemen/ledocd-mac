@@ -250,7 +250,7 @@ struct LEDView: View {
                               section: presets.contains(where: \.isCustom)
                                   ? { $0.map { $0.isCustom ? "Custom Games" : "Default Games" } }
                                   : nil)
-                    .hint("Pick your machine — loads its insert names into the lamp list.", hintArea)
+                    .hint("Pick your machine — loads its insert names into the lamp list. Names only: it never changes your brightness or profile values.", hintArea)
                 Button { editor.startNew() } label: {
                     Image(systemName: sfSymbol("document.badge.plus", fallback: "doc.badge.plus"))
                 }
@@ -372,7 +372,7 @@ struct LEDView: View {
             }
         }
         .padding(.horizontal, 8).padding(.vertical, 3)
-        .background(striped ? Color.gray.opacity(0.06) : Color.clear)
+        .background(striped ? Theme.shade : Color.clear)
     }
 
     private func profileName(forLamp n: Int) -> String {
@@ -472,9 +472,9 @@ struct LEDView: View {
                 .textFieldStyle(.plain)
                 .frame(width: wB).padding(.vertical, 3)
                 .background(RoundedRectangle(cornerRadius: 5)
-                    .fill(shown ? Color.yellow.opacity(0.35) : Color(nsColor: .textBackgroundColor)))
+                    .fill(shown ? Theme.lamp.opacity(0.35) : Color(nsColor: .textBackgroundColor)))
                 .overlay(RoundedRectangle(cornerRadius: 5)
-                    .stroke(shown ? Color.yellow : Color.primary.opacity(0.22), lineWidth: 1))
+                    .stroke(shown ? Theme.lamp : Color.primary.opacity(0.22), lineWidth: 1))
                 .focused($focusedBrightness, equals: p * 8 + i)
         } else if liveOn {
             // Locked middle value (Advanced off): tap to preview it on the lamps.
@@ -485,7 +485,7 @@ struct LEDView: View {
                     .foregroundStyle(.secondary)
                     .frame(width: wB).padding(.vertical, 3)
                     .background(RoundedRectangle(cornerRadius: 5)
-                        .fill(shown ? Color.yellow.opacity(0.35) : Color.clear))
+                        .fill(shown ? Theme.lamp.opacity(0.35) : Color.clear))
             }
             .buttonStyle(.plain)
         } else {

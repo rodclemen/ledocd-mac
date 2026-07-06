@@ -30,6 +30,9 @@ over its FTDI USB-serial cable and lets you:
   real time — no guessing at numbers.
 - Load the **lamp names for your machine** (100+ machines: WPC / Williams /
   Bally / Data East, Stern, Capcom) so you edit "Left Ramp", not "lamp 36".
+  Names only — picking a game never changes your settings: those live on the
+  board itself (Save makes them permanent), with Export files as your
+  per-machine backups.
 - Add, clone, rename, and delete **custom games** for machines not in the list.
 - Configure **GI OCD** general-illumination strings (normal/active brightness,
   activity response, fade speed, 50 Hz, output frequency).
@@ -57,7 +60,8 @@ over its FTDI USB-serial cable and lets you:
    **Live Mode**, tune while watching the real playfield, and press
    **Commit Changes** — send + save in one press.
 
-The **Help → LED OCD Help…** menu opens a full manual covering every feature.
+A full manual covering every feature is built in: press **i**, click the **?**
+at the top right, or use **Help → LEDOCD Manual**.
 
 ## Requirements
 
@@ -78,7 +82,8 @@ The **Help → LED OCD Help…** menu opens a full manual covering every feature
 
 `build.sh` builds a universal SwiftPM binary, compiles the icon asset catalog
 from `app_icon.png`, bundles the machine presets from `data/*.csv` into
-`Contents/Resources/data/`, and signs with a hardened runtime. No Xcode
+`Contents/Resources/data/` and the manual (`docs/manual.html`) as
+`Contents/Resources/manual.html`, and signs with a hardened runtime. No Xcode
 project — plain SwiftPM.
 
 **Signing is automatic and needs no configuration:** if your keychain holds a
@@ -128,7 +133,7 @@ the release notes. Refuses to run with uncommitted changes or an existing tag.
 | `ConfigIO.swift` | Import/Export in the original Windows app's XML format (byte-identical export) |
 | `Preview.swift` | Live Mode engine — persistent manual-mode serial session, fade math |
 | `ManualTest.swift` | Manual Test window — per-lamp/string levels, checkerboard, all-off |
-| `Help.swift` | The in-app manual window |
+| `Help.swift` | The in-app manual window (renders the bundled `docs/manual.html`) |
 | `Components.swift`, `LEDView.swift`, `GIView.swift`, `App.swift` | SwiftUI UI |
 
 `makeicon.swift` (repo root) reshapes `app_icon.png` into the macOS icon
@@ -144,6 +149,21 @@ squircle template at build time.
 
 Custom games live in their own folder so a machine-data refresh can never
 overwrite them; a custom game may even share a name with a default one.
+
+## Wire protocol notes
+
+- 9600 baud 8N1 over the FTDI cable; every command is a `<…>` frame, with a
+  40 ms pause between messages (the firmware needs it).
+- `<V>` reads the firmware version — board type + version number; the version
+  implies the lamp matrix (but Capcom A vs B can't be told apart by firmware).
+  `<Q>` makes the board stream its whole configuration back as `{…}` frames.
+  `<S>` persists the board's current settings to nonvolatile memory.
+- Lamp number ↔ matrix position: WPC/Capcom `lamp = (col+1)·10 + (row+1)`
+  (lamps 11–88); Stern `lamp = row·8 + col + 1` (lamps 1–80). Reads are
+  decoded with the selected game's matrix when one is chosen (more specific
+  than firmware — that's how Capcom A/B is resolved).
+- Capcom B boards need a relay prefix on every message; the app adds it
+  automatically when the matrix is Capcom B.
 
 ## Provenance
 
