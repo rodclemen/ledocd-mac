@@ -19,6 +19,11 @@ GUI) that this app is a faithful native-Mac rewrite of. The machine lamp maps
 are his, served from ledocd.com. None of this would exist without that work —
 this project only re-wraps it in a modern Mac interface.
 
+Comet Pinball currently supplies LED OCD and GI OCD hardware and has permitted
+this independent app and its source code to be distributed on a non-sale
+basis. This is not an official Comet Pinball product, and neither Harold
+Toler nor Comet Pinball is responsible for support for this app.
+
 ## What it does
 
 The board sits between the game and the playfield LEDs. This app talks to it
@@ -173,3 +178,34 @@ The serial protocol was transcribed message-for-message from Harold Toler's
 CSV format: one `lampNumber,insertName` line per lamp; a lamp number below 11
 means a Stern matrix; `CAPCOM_A` / `CAPCOM_B` marker lines select the Capcom
 matrix (B uses a relay prefix on every serial message).
+
+## Contributing
+
+Bug reports, feature requests, and pull requests are welcome. Please read
+[`CONTRIBUTING.md`](CONTRIBUTING.md) before submitting code. Contributions are
+accepted under the same license terms as this repository.
+
+## Support and security
+
+Use [GitHub Issues](https://github.com/rodclemen/ledocd-mac/issues) for app
+support, reproducible bugs, and feature requests.
+
+Do not report suspected security vulnerabilities in a public issue. Use
+GitHub's private vulnerability reporting as described in
+[`SECURITY.md`](SECURITY.md).
+
+## License
+
+LED OCD for Mac is **source-available software** distributed under the MIT
+License with the Commons Clause License Condition v1.0.
+
+You may use, copy, modify, fork, and redistribute the software, including
+modified versions, subject to the complete terms in [`LICENSE`](LICENSE). You
+may not sell the software or offer substantially the same software as a paid
+product or service.
+
+Because the license restricts selling the software, this project is not
+OSI-approved open-source software.
+
+See [`NOTICE.md`](NOTICE.md) for attribution, permission, and third-party-rights
+information.
